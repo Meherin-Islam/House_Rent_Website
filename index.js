@@ -2,6 +2,8 @@ const express = require('express');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
+const { ObjectId } = require('mongodb');
+
 const port = process.env.PORT || 5000;
 
 // Middleware
@@ -146,6 +148,19 @@ app.delete('/announcements/:id', async (req, res) => {
         res.status(500).send("Failed to fetch apartments");
       }
     });
+
+
+// API to get all agreement requests
+app.get('/agreements', async (req, res) => {
+  try {
+    const agreements = await agreementCollection.find().toArray();
+    res.status(200).json(agreements);
+  } catch (error) {
+    console.error("Error fetching agreements:", error);
+    res.status(500).send("Failed to fetch agreements");
+  }
+});
+
 
     
     app.post('/agreements', async (req, res) => {
