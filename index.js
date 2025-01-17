@@ -12,7 +12,6 @@ app.use(express.json());
 const { MongoClient, ServerApiVersion } = require('mongodb');
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.7g8b9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
-// Create a MongoClient
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -21,14 +20,14 @@ const client = new MongoClient(uri, {
   },
 });
 
-// Main async function to handle database connections and routes
+
 async function run() {
   try {
-    // Connect to MongoDB
+   
     await client.connect();
     console.log("Connected to MongoDB");
 
-    // Database and Collection References
+   
     const db = client.db("BuildDB");
     const apartmentCollection = db.collection("apartments");
     const agreementCollection = db.collection("agreements");
@@ -44,26 +43,24 @@ async function run() {
       }
     });
 
-    /**
-     * POST /agreements
-     * Submit a new rental agreement
-     */
+    
     app.post('/agreements', async (req, res) => {
       const { userName, userEmail, floorNo, blockName, apartmentNo, rent, status } = req.body;
 
-      // Validate required fields
+      
       if (!userName || !userEmail || !floorNo || !blockName || !apartmentNo || !rent) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
       try {
-        // Check for existing agreement for the same apartment
-        const existingAgreement = await agreementCollection.findOne({ apartmentNo });
-        if (existingAgreement) {
-          return res.status(400).json({ error: "Agreement already exists for this apartment" });
+        
+        
+
+        const emailAgreement = await agreementCollection.findOne({ userEmail });
+        if (emailAgreement) {
+          return res.status(409).json({ error: true, message: 'This email already has an agreement' });
         }
 
-        // Create a new agreement object
         const newAgreement = {
           userName,
           userEmail,
@@ -71,11 +68,11 @@ async function run() {
           blockName,
           apartmentNo,
           rent,
-          status: status || 'pending', // Default to 'pending'
+          status: status || 'pending', 
           createdAt: new Date(),
         };
 
-        // Insert the new agreement into the collection
+        
         const result = await agreementCollection.insertOne(newAgreement);
 
         res.status(201).json({
@@ -88,10 +85,7 @@ async function run() {
       }
     });
 
-    /**
-     * GET /
-     * Root route
-     */
+    
     app.get('/', (req, res) => {
       res.send('Boss is sitting');
     });
