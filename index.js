@@ -32,19 +32,13 @@ async function run() {
     const apartmentCollection = db.collection("apartments");
     const agreementCollection = db.collection("agreements");
     const userCollection = db.collection("users");
+    const announcementCollection = db.collection("announcements");
 
-    app.get('/users',  async (req, res) => {
-      const result = await userCollection.find().toArray();
-      res.send(result);
-    });
+   
 
 
     app.get('/users/admin/:email',  async (req, res) => {
       const email = req.params.email;
-
-      if (email !== req.decoded.email) {
-        return res.status(403).send({ message: 'forbidden access' })
-      }
 
       const query = { email: email };
       const user = await userCollection.findOne(query);
@@ -55,19 +49,38 @@ async function run() {
       res.send({ admin });
     })
 
+    
+
+
     app.post('/users', async (req, res) => {
-      const user = req.body;
-      // insert email if user doesnt exists: 
-      // you can do this many ways (1. email unique, 2. upsert 3. simple checking)
-      const query = { email: user.email }
-      const existingUser = await userCollection.findOne(query);
-      if (existingUser) {
-        return res.send({ message: 'user already exists', insertedId: null })
+      const { email, name } = req.body;
+    
+      // Validate input
+      if (!email || !name) {
+        return res.status(400).json({ error: "Email and name are required" });
       }
-      const result = await userCollection.insertOne(user);
+    
+      try {
+        const existingUser = await userCollection.findOne({ email });
+        if (existingUser) {
+          return res.status(409).json({ message: "User already exists" });
+        }
+    
+        const result = await userCollection.insertOne({ email, name });
+        res.status(201).json({ message: "User added successfully", userId: result.insertedId });
+      } catch (error) {
+        console.error("Error adding user:", error);
+        res.status(500).json({ error: "Database operation failed" });
+      }
+    });
+
+    app.get('/users',  async (req, res) => {
+      const result = await userCollection.find().toArray();
       res.send(result);
     });
 
+
+    
     
     app.get('/apartments', async (req, res) => {
       try {
