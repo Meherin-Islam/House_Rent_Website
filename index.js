@@ -204,20 +204,14 @@ app.get('/agreements', async (req, res) => {
       }
     });
 
-    
-    app.get('/', (req, res) => {
-      res.send('Boss is sitting');
-    });
+// API to update agreement status (accept or reject)
+app.patch('/agreements/:id', async (req, res) => {
+  const { id } = req.params;
+  const { action } = req.body;
 
-  } catch (error) {
-    console.error("Error connecting to MongoDB:", error);
+  if (!action || (action !== 'accept' && action !== 'reject')) {
+    return res.status(400).json({ error: "Invalid action. Must be 'accept' or 'reject'." });
   }
-}
 
-// Run the server
-run().catch(console.dir);
-
-// Start listening
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+  try {
+   
