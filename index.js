@@ -90,6 +90,33 @@ app.get('/announcements', async (req, res) => {
     res.status(500).send("Failed to fetch announcements");
   }
 });
+
+// Endpoint to add a new announcement
+app.post('/announcements', async (req, res) => {
+  const { title, description } = req.body;
+
+  // Validate input
+  if (!title || !description) {
+    return res.status(400).json({ error: "Title and description are required" });
+  }
+
+  try {
+    const newAnnouncement = {
+      title,
+      description,
+      createdAt: new Date(),
+    };
+
+    const result = await announcementCollection.insertOne(newAnnouncement);
+    res.status(201).json({
+      message: "Announcement added successfully",
+      announcementId: result.insertedId,
+    });
+  } catch (error) {
+    console.error("Error adding announcement:", error);
+    res.status(500).send("Failed to add announcement");
+  }
+});
     
     app.get('/apartments', async (req, res) => {
       try {
