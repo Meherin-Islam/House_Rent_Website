@@ -118,6 +118,25 @@ app.post('/announcements', async (req, res) => {
   }
 });
     
+
+ // Endpoint to delete an announcement
+app.delete('/announcements/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await announcementCollection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ error: "Announcement not found" });
+    }
+
+    res.status(200).json({ message: "Announcement deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting announcement:", error);
+    res.status(500).send("Failed to delete announcement");
+  }
+});
+
     app.get('/apartments', async (req, res) => {
       try {
         const apartments = await apartmentCollection.find().toArray();
