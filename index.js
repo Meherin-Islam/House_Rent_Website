@@ -80,7 +80,16 @@ async function run() {
     });
 
 
-    
+    // Endpoint to get all announcements
+app.get('/announcements', async (req, res) => {
+  try {
+    const announcements = await announcementCollection.find().toArray();
+    res.status(200).json(announcements);
+  } catch (error) {
+    console.error("Error fetching announcements:", error);
+    res.status(500).send("Failed to fetch announcements");
+  }
+});
     
     app.get('/apartments', async (req, res) => {
       try {
