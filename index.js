@@ -39,19 +39,52 @@ async function run() {
    
 
 
-    app.get('/users/admin/:email',  async (req, res) => {
-      const email = req.params.email;
+    // app.get('/users/admin/:email',  async (req, res) => {
+    //   const email = req.params.email;
 
+    //   const query = { email: email };
+    //   const user = await userCollection.findOne(query);
+    //   let admin = false;
+    //   if (user) {
+    //     admin = user?.role === 'admin';
+    //     
+    //   }
+    //   res.send({ admin });
+    // })
+
+    app.get('/users/admin/:email', async (req, res) => {
+      const email = req.params.email;
+  
+      
       const query = { email: email };
       const user = await userCollection.findOne(query);
+  
+      
       let admin = false;
-      if (user) {
-        admin = user?.role === 'admin';
+      let adminData = { totalUsers: 0, totalMembers: 0 };
+  
+      if (user && user.role === "admin") {
+          admin = true;
+  
+          
+          const totalUsers = await userCollection.countDocuments();
+          const totalMembers = await userCollection.countDocuments({ role: "member" });
+  
+         
+          
+          adminData = {
+              totalUsers,
+              totalMembers
+              
+          };
       }
-      res.send({ admin });
-    })
+  
+      res.send({ admin, ...adminData });
+  });
+  
 
-    
+
+
 
 
     app.post('/users', async (req, res) => {
@@ -204,14 +237,65 @@ app.get('/agreements', async (req, res) => {
       }
     });
 
-// API to update agreement status (accept or reject)
+
+    // API to update agreement status (accept or reject)
+
+
 app.patch('/agreements/:id', async (req, res) => {
   const { id } = req.params;
   const { action } = req.body;
 
   if (!action || (action !== 'accept' && action !== 'reject')) {
-    return res.status(400).json({ error: "Invalid action. Must be 'accept' or 'reject'." });
+    return res.status(400).json({ success: false, error: "Invalid action. Must be 'accept' or 'reject'." });
   }
 
   try {
-   
+    // Find the agreement by ID
+    const agreement = await agreementCollection.findOne({ _id: new ObjectId(id) });
+    if (!agreement) {
+      return res.status(404).json({ success: false, error: "Agreement not found" });
+    }
+
+    // Update fields based on the action
+    const updateFields = {
+      status: "checked",
+    };
+
+    // If action is 'accept', update the user's role to 'member'
+    if (action === "accept") {
+      await userCollection.updateOne(
+        { email: agreement.userEmail },
+        { $set: { role: "member" } }
+      );
+    }
+
+    // Update the agreement's status
+    await agreementCollection.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateFields }
+    );
+
+    res.status(200).json({ success: true, message: `Agreement ${action}ed successfully` });
+  } catch (error) {
+    console.error(`Error ${action}ing agreement:`, error);
+    res.status(500).json({ success: false, error: `Failed to ${action} agreement` });
+  }
+});
+
+    
+    app.get('/', (req, res) => {
+      res.send('Boss is sitting');
+    });
+
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+  }
+}
+
+// Run the server
+run().catch(console.dir);
+
+// Start listening
+app.listen(port, () => {
+  console.log(`Server is running on http://localhost:${port}`);
+});
